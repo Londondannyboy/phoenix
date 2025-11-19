@@ -24,6 +24,7 @@ from config import config
 # Import workflows
 from workflows.company_creation import CompanyCreationWorkflow
 from workflows.article_creation import ArticleCreationWorkflow
+from workflows.news_monitor import NewsMonitorWorkflow, NewsMonitorAllAppsWorkflow
 
 # Import all activities
 # Research
@@ -46,6 +47,11 @@ from activities.research.crawl_fallback import (
 from activities.research.deep_research import (
     deep_research_company,
     deep_research_article,
+)
+from activities.research.news_assessment import (
+    assess_story_relevance,
+    assess_news_batch,
+    get_recent_articles_from_neon,
 )
 
 # Storage
@@ -133,6 +139,8 @@ async def main():
         workflows=[
             CompanyCreationWorkflow,
             ArticleCreationWorkflow,
+            NewsMonitorWorkflow,
+            NewsMonitorAllAppsWorkflow,
         ],
         activities=[
             # ========== RESEARCH ==========
@@ -155,6 +163,11 @@ async def main():
             # Deep Research
             deep_research_company,
             deep_research_article,
+
+            # News Assessment (Pydantic AI)
+            assess_story_relevance,
+            assess_news_batch,
+            get_recent_articles_from_neon,
 
             # ========== STORAGE ==========
             # Zep Hybrid
@@ -189,8 +202,10 @@ async def main():
     print("=" * 70)
 
     print("\nRegistered Workflows:")
-    print("   - CompanyCreationWorkflow")
-    print("   - ArticleCreationWorkflow")
+    print("   - CompanyCreationWorkflow (API triggered)")
+    print("   - ArticleCreationWorkflow (API triggered)")
+    print("   - NewsMonitorWorkflow (Scheduled)")
+    print("   - NewsMonitorAllAppsWorkflow (Scheduled)")
 
     print("\nRegistered Activities:")
     activity_groups = [
