@@ -1,0 +1,12 @@
+{
+  "name": "streamlit",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "streamlit run app.py",
+    "start": "streamlit run app.py --server.port ${PORT:-8501}",
+    "build": "echo 'No build step for Streamlit'",
+    "test": "pytest",
+    "lint": "ruff check ."
+  }
+}
