@@ -61,6 +61,24 @@ from activities.storage.zep_hybrid import (
     deposit_to_zep_hybrid,
     build_zep_context_prompt,
 )
+from activities.storage.neon import (
+    init_database_schema,
+    save_company_to_neon,
+    get_company_from_neon,
+    save_article_to_neon,
+    get_article_from_neon,
+    list_companies_from_neon,
+    list_articles_from_neon,
+)
+
+# Generation
+from activities.generation.profile import (
+    generate_company_profile,
+)
+from activities.generation.article import (
+    generate_article_content,
+    extract_entities_from_content,
+)
 
 
 async def main():
@@ -176,15 +194,21 @@ async def main():
             deposit_to_zep_hybrid,
             build_zep_context_prompt,
 
+            # Neon Database
+            init_database_schema,
+            save_company_to_neon,
+            get_company_from_neon,
+            save_article_to_neon,
+            get_article_from_neon,
+            list_companies_from_neon,
+            list_articles_from_neon,
+
+            # ========== GENERATION ==========
+            generate_company_profile,
+            generate_article_content,
+            extract_entities_from_content,
+
             # TODO: Add these as they're built
-            # Database
-            # save_company_to_neon,
-            # save_article_to_neon,
-
-            # Generation
-            # generate_company_profile,
-            # generate_article_content,
-
             # Media
             # generate_images,
             # extract_logo,
@@ -234,6 +258,17 @@ async def main():
             "get_zep_context_for_generation",
             "deposit_to_zep_hybrid",
             "build_zep_context_prompt",
+        ]),
+        ("Storage - Neon", [
+            "save_company_to_neon",
+            "save_article_to_neon",
+            "list_companies_from_neon",
+            "list_articles_from_neon",
+        ]),
+        ("Generation", [
+            "generate_company_profile",
+            "generate_article_content",
+            "extract_entities_from_content",
         ]),
     ]
 

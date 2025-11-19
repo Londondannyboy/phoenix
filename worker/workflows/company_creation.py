@@ -131,41 +131,30 @@ class CompanyCreationWorkflow:
         # ===== PHASE 5: GENERATE PROFILE =====
         workflow.logger.info("Phase 5: Generating company profile (Claude Sonnet 4.5)")
 
-        # TODO: Implement generate_company_profile activity
-        # This will use the research_data + context_prompt to generate profile
-        # profile = await workflow.execute_activity(
-        #     "generate_company_profile",
-        #     args=[research_data, context_prompt],
-        #     start_to_close_timeout=timedelta(seconds=120)
-        # )
+        profile = await workflow.execute_activity(
+            "generate_company_profile",
+            args=[research_data, context_prompt, app],
+            start_to_close_timeout=timedelta(seconds=120)
+        )
 
-        # Placeholder profile
-        profile = {
-            "name": company_name_guess,
-            "slug": domain.replace(".", "-"),
-            "domain": domain,
-            "category": category,
-            "app": app,
-            "profile_sections": {
-                "overview": {
-                    "title": "Overview",
-                    "content": f"Company profile for {company_name_guess}"
-                }
-            },
-            "deals": [],
-            "key_people": [],
-            "data_completeness_score": 0.0
-        }
+        workflow.logger.info(
+            f"Profile generated: completeness={profile.get('data_completeness_score', 0):.2f}"
+        )
 
         # ===== PHASE 6: EXTRACT ENTITIES =====
         workflow.logger.info("Phase 6: Extracting entities for Zep graph")
 
-        # TODO: Implement entity extraction
+        # Use entities from profile generation
         extracted_entities = {
-            "deals": [],
-            "people": [],
-            "companies": []
+            "deals": profile.get("deals", []),
+            "people": profile.get("key_people", []),
+            "companies": profile.get("related_companies", [])
         }
+
+        workflow.logger.info(
+            f"Entities: {len(extracted_entities['deals'])} deals, "
+            f"{len(extracted_entities['people'])} people"
+        )
 
         # ===== PHASE 7: GENERATE IMAGES =====
         workflow.logger.info("Phase 7: Generating images (Flux)")
@@ -180,8 +169,17 @@ class CompanyCreationWorkflow:
         # ===== PHASE 8: SAVE TO DATABASE =====
         workflow.logger.info("Phase 8: Saving to Neon database")
 
-        # TODO: Implement database save
-        company_id = "temp-id-" + domain
+        db_result = await workflow.execute_activity(
+            "save_company_to_neon",
+            args=[profile, "draft"],
+            start_to_close_timeout=timedelta(seconds=30)
+        )
+
+        company_id = db_result.get("company_id", "temp-id-" + domain)
+
+        workflow.logger.info(
+            f"Saved to database: {db_result.get('operation')} {db_result.get('slug')}"
+        )
 
         # ===== PHASE 9: DEPOSIT TO ZEP =====
         workflow.logger.info("Phase 9: Depositing to Zep (hybrid storage)")

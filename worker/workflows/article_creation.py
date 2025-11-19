@@ -115,40 +115,34 @@ class ArticleCreationWorkflow:
         # ===== PHASE 4: GENERATE ARTICLE =====
         workflow.logger.info("Phase 4: Generating article content (Claude Sonnet 4.5)")
 
-        # TODO: Implement generate_article_content activity
-        # article = await workflow.execute_activity(
-        #     "generate_article_content",
-        #     args=[research_data, context_prompt, article_type],
-        #     start_to_close_timeout=timedelta(seconds=180)
-        # )
+        article = await workflow.execute_activity(
+            "generate_article_content",
+            args=[topic, article_type, research_data, context_prompt, app],
+            start_to_close_timeout=timedelta(seconds=180)
+        )
 
-        # Placeholder article
-        from python_slugify import slugify
-        slug = slugify(topic[:50])
+        workflow.logger.info(
+            f"Article generated: '{article.get('title')}', "
+            f"completeness={article.get('data_completeness_score', 0):.2f}"
+        )
 
-        article = {
-            "title": topic,
-            "slug": slug,
-            "article_type": article_type,
-            "app": app,
-            "summary": f"Article about: {topic}",
-            "content": "",
-            "sections": [],
-            "companies_mentioned": [],
-            "people_mentioned": [],
-            "deals_mentioned": [],
-            "data_completeness_score": 0.0
-        }
+        slug = article.get("slug", topic.lower().replace(" ", "-")[:50])
 
         # ===== PHASE 5: EXTRACT ENTITIES =====
         workflow.logger.info("Phase 5: Extracting entities for Zep graph")
 
-        # TODO: Implement entity extraction from article
+        # Use entities from article generation
         extracted_entities = {
-            "deals": [],
-            "people": [],
-            "companies": []
+            "deals": article.get("deals_mentioned", []),
+            "people": [{"name": p} for p in article.get("people_mentioned", [])],
+            "companies": [{"name": c} for c in article.get("companies_mentioned", [])]
         }
+
+        workflow.logger.info(
+            f"Entities: {len(extracted_entities['deals'])} deals, "
+            f"{len(extracted_entities['people'])} people, "
+            f"{len(extracted_entities['companies'])} companies"
+        )
 
         # ===== PHASE 6: GENERATE IMAGES =====
         workflow.logger.info("Phase 6: Generating 7 contextual images (Flux)")
@@ -162,8 +156,17 @@ class ArticleCreationWorkflow:
         # ===== PHASE 7: SAVE TO DATABASE =====
         workflow.logger.info("Phase 7: Saving to Neon database")
 
-        # TODO: Implement database save
-        article_id = "temp-article-" + slug
+        db_result = await workflow.execute_activity(
+            "save_article_to_neon",
+            args=[article, "draft", False],
+            start_to_close_timeout=timedelta(seconds=30)
+        )
+
+        article_id = db_result.get("article_id", "temp-article-" + slug)
+
+        workflow.logger.info(
+            f"Saved to database: {db_result.get('operation')} {db_result.get('slug')}"
+        )
 
         # ===== PHASE 8: DEPOSIT TO ZEP =====
         workflow.logger.info("Phase 8: Depositing to Zep (hybrid storage)")
